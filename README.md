@@ -607,4 +607,30 @@ examples/        an event hook script to adapt
 tests/           simulated PSU and seven test suites
 docs/            wiring, registers, UPS-MIB mapping, wiring diagram
 install.sh       installer
+LICENSE          GNU GPL v3
 ```
+
+## License
+
+Copyright (C) 2026 JohnDepon
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either **version 3** of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>. The full text is in
+[`LICENSE`](LICENSE).
+
+LibreNMS is GPLv3 as well, so the OS definition, discovery file and icon under
+`librenms/` are licence-compatible with it if you ever want to send them
+upstream.
+
+The MEAN WELL and Waveshare documents this was written from are **not**
+covered by that licence and are not redistributed here — see the table above
+for where to fetch them.
