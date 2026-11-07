@@ -149,7 +149,8 @@ Fixed by the DRS-240 and not adjustable:
 ## Slave address
 
 The Modbus slave ID is `0x8X`, where `X` is a two-bit address strapped on
-**CN1** (the 8-pin "force button" header, part JS-2008R-4*2-T):
+**CN1**, the 8-pin "force button" header. The datasheet calls it CN1 and the
+instruction manual calls the same connector CN12; they are one and the same.
 
 | CN1 pin | Signal |
 |---|---|
@@ -161,7 +162,17 @@ The Modbus slave ID is `0x8X`, where `X` is a two-bit address strapped on
 | **6** | **A1** |
 | 7, 8 | Open: normal. Shorted: force start |
 
-Each address line reads **1 when open** and **0 when shorted to GND**:
+> **The manual contradicts itself about which pin is which.** In its CN12
+> table the Function column reads `A0` for pin 5 and `A1` for pin 6 — as
+> above, and as the datasheet has it — but the Description column on those
+> same two rows reads *"Address line(A1)"* for pin 5 and *"Address line(A0)"*
+> for pin 6. Two sources back the table above, so it is the one to trust, but
+> do not stake anything on the predicted address: strap a pin, then run
+> `drs240 probe` and use what answers. Getting `0x81` where you expected
+> `0x82` costs you nothing — both are valid and distinct.
+
+Each address line reads **1 when open** and **0 when shorted to GND**
+(§5.4.1.2 of the manual), and the device number is `A1 × 2 + A0`:
 
 | A1 | A0 | Device | Slave ID |
 |---|---|---|---|
@@ -191,13 +202,62 @@ Put each supply's address in its own unit file as `[modbus] slave_id`, then
 confirm the bus two ways: `drs240 probe` should list one line per supply, and
 `drs240 units` prints the addresses the bridge will actually use.
 
-Strapping is the only way to change the address: it is a hardware input, not
-a register, so there is nothing `drs240 set` can do about it. Do it with the
-supply unplugged.
+### Changing the address, step by step
 
-A0 and A1 are inputs with pull-ups, so "strapping" means a wire from that pin
-to CN1 pin 2 (GND) — a jumper, a DIP switch, or a link in the header shell.
-Nothing else on CN1 needs touching.
+Strapping is the only way. The manual is explicit — *"Slave ID is set by CN12
+(A0~A1)"* — there is no address register, which is why `drs240 set` cannot
+write it and why `_WRITABLE` in `cli.py` does not list it.
+
+1. **Kill the power properly: unplug the mains *and* disconnect the battery.**
+   This is a DC UPS. With the battery still on its terminals the unit goes on
+   running and CN1 pin 1 stays at +3.3 V.
+2. Link **CN1 pin 5 (A0) to CN1 pin 2 (GND)** for the second supply. See the
+   table above for the third and fourth.
+3. **Leave pins 7 and 8 alone.** Shorting that pair is *force start*. And keep
+   everything off pin 1, which is the 3.3 V rail — bridging it to pin 2 is a
+   dead short across the supply's own logic rail.
+4. Power up with **only this supply on the bus** and run `drs240 probe`. It
+   scans all four addresses, so it reports what the unit actually became
+   rather than what you intended.
+5. Put that value in the supply's unit file as `[modbus] slave_id`, re-run
+   `install.sh`, and restart `drs240d`.
+6. Reconnect every supply. `drs240 probe` should now list one line each, and
+   `drs240 units` should agree with it.
+
+### Making the strap
+
+CN1 is **8 positions, 4 rows × 2 columns**, odd pins in one column and even in
+the other:
+
+```
+   2   1          1  3.3 V        5  A0
+   4   3          2  GND          6  A1
+   6   5          3  RTH+       7,8  open  = normal
+   8   7          4  RTH−            short = force start
+```
+
+Pins 2 and 5 are **diagonal, two rows apart**, so no jumper shunt will bridge
+them. You need crimped leads with the link made outside the housing.
+
+The mating part, from both documents:
+
+```
+JS-2008R-4*2-T or equivalent
+```
+
+"or equivalent" is MEAN WELL's own wording, and worth taking them up on: there
+is no manufacturer page for `JS-2008R` to be found. The `2008` is the usual
+industry designation for a **2.00 mm** pitch wire-to-board wafer family — CJT's
+A2008 series has exactly the matching dual-row `A2008H-2x4P` housing — but
+that is inference from the part-number convention, not a datasheet for this
+exact part. **Check the pitch against a scrap of 0.1" (2.54 mm) header before
+ordering**; the difference is obvious side by side.
+
+So: a 2×4 (8-way) dual-row crimp housing in whichever pitch you measure, plus
+loose crimp contacts, which housings are normally sold without. Only positions
+2 and 5 need populating — plus 3 and 4 if you ever fit the battery NTC, which
+shares this connector and turns `upsBatteryTemperature` from a fixed value
+into a real reading.
 
 ## Safety notes
 
@@ -206,5 +266,9 @@ Nothing else on CN1 needs touching.
 - The RJ45 socket is on the low-voltage face of the unit, but the terminal
   blocks a few centimetres away carry mains. Make the cable up with the supply
   **unplugged**.
-- Nothing here needs the CN1 header. Leave it alone unless you are strapping
-  addresses or fitting the battery NTC.
+- Nothing in the RS485 wiring needs the CN1 header. Leave it alone unless you
+  are strapping addresses or fitting the battery NTC.
+- If you are in CN1: pins 7–8 are force start, and pin 1 is +3.3 V. Short
+  either by accident and you get a supply that will not behave, or a dead
+  logic rail. Work on it with the mains unplugged **and** the battery
+  disconnected — on a DC UPS the battery alone keeps everything live.
