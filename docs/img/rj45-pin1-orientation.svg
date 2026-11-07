@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 230" width="520" height="230" role="img">
+  <title>An RJ45 plug seen from the contact face with the latch pointing away. Pins number 1 to 8 from left to right, with T568B conductor colours below each: white/orange, orange, white/green, blue, white/blue, green, white/brown, brown. Pins 6, 7 and 8 are highlighted as the ones in use.</title>
+  <style>
+    .fig-bg  { fill: #FFFFFF; }
+    .t-pin   { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 13px; font-weight: 600; fill: #121820; }
+    .t-nc    { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 11px; font-weight: 400; fill: #7A8994; letter-spacing: .08em; }
+    .t-wire  { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 12.5px; font-weight: 600; fill: #121820; letter-spacing: .02em; }
+    .t-sub   { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 11px; font-weight: 400; fill: #4B5A66; letter-spacing: .04em; }
+    .t-brow  { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 11px; font-weight: 500; fill: #7A8994; letter-spacing: .13em; }
+    .t-warn  { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 12px; font-weight: 600; fill: #CE3A2B; letter-spacing: .04em; }
+
+    .plug-body    { fill: #F4F6F7; stroke: #4B5A66; stroke-width: 1.6; }
+    .plug-latch   { fill: #F4F6F7; stroke: #4B5A66; stroke-width: 1.6; }
+    .contact-live { fill: #BE9A28; stroke: #A8672C; stroke-width: 1; }
+    .contact-nc   { fill: #C3C9CD; stroke: #CFD7DD; stroke-width: 1; }
+    .adapter-body { fill: #1E242B; stroke: #4B5A66; stroke-width: 1.4; }
+    .usb-tab      { fill: #C3C9CD; stroke: #4B5A66; stroke-width: 1.2; }
+    .join-box     { fill: none; stroke: #A8672C; stroke-width: 1.4; stroke-dasharray: 5 4; }
+
+    .wire      { stroke-width: 8; stroke-linecap: round; fill: none; }
+    .wire-thin { stroke-width: 6; stroke-linecap: round; fill: none; }
+    .s-green   { stroke: #2A8355; }
+    .s-brown   { stroke: #7A4A2B; }
+    .s-white   { stroke: #FFFFFF; stroke-width: 3; stroke-dasharray: 13 11; stroke-linecap: butt; }
+    .s-yellow  { stroke: #CE9A12; }
+    .s-blue    { stroke: #1F5FC4; }
+    .s-black   { stroke: #1E242B; }
+    .s-red     { stroke: #CE3A2B; }
+  </style>
+  <rect class="fig-bg" x="0" y="0" width="520" height="230"/>
+
+
+          <text class="t-brow" x="30" y="24">CONTACTS TOWARD YOU &#183; LATCH AWAY FROM YOU</text>
+
+          <!-- plug outline -->
+          <rect class="plug-body" x="30" y="40" width="460" height="118" rx="7"/>
+          <path class="plug-latch" d="M225 158 h70 v26 a5 5 0 0 1 -5 5 h-60 a5 5 0 0 1 -5 -5 z"/>
+
+          <!-- contacts + numbers + T568B swatches -->
+          <g>
+            <rect class="contact-nc"   x="52"  y="56" width="34" height="52" rx="2"/>
+            <rect class="contact-nc"   x="104" y="56" width="34" height="52" rx="2"/>
+            <rect class="contact-nc"   x="156" y="56" width="34" height="52" rx="2"/>
+            <rect class="contact-nc"   x="208" y="56" width="34" height="52" rx="2"/>
+            <rect class="contact-nc"   x="260" y="56" width="34" height="52" rx="2"/>
+            <rect class="contact-live" x="312" y="56" width="34" height="52" rx="2"/>
+            <rect class="contact-live" x="364" y="56" width="34" height="52" rx="2"/>
+            <rect class="contact-live" x="416" y="56" width="34" height="52" rx="2"/>
+          </g>
+
+          <text class="t-pin" x="69"  y="132" text-anchor="middle">1</text>
+          <text class="t-pin" x="121" y="132" text-anchor="middle">2</text>
+          <text class="t-pin" x="173" y="132" text-anchor="middle">3</text>
+          <text class="t-pin" x="225" y="132" text-anchor="middle">4</text>
+          <text class="t-pin" x="277" y="132" text-anchor="middle">5</text>
+          <text class="t-pin" x="329" y="132" text-anchor="middle">6</text>
+          <text class="t-pin" x="381" y="132" text-anchor="middle">7</text>
+          <text class="t-pin" x="433" y="132" text-anchor="middle">8</text>
+
+          <!-- T568B colour strip -->
+          <g stroke="currentColor" stroke-width="1" style="color: var(--rule)">
+            <rect x="52"  y="140" width="34" height="12" fill="var(--w-white)"/>
+            <rect x="104" y="140" width="34" height="12" fill="#E07B1E"/>
+            <rect x="156" y="140" width="34" height="12" fill="var(--w-white)"/>
+            <rect x="208" y="140" width="34" height="12" fill="#2C6FD1"/>
+            <rect x="260" y="140" width="34" height="12" fill="var(--w-white)"/>
+            <rect x="312" y="140" width="34" height="12" fill="var(--w-green)"/>
+            <rect x="364" y="140" width="34" height="12" fill="var(--w-white)"/>
+            <rect x="416" y="140" width="34" height="12" fill="var(--w-brown)"/>
+          </g>
+          <!-- stripes on the tracer pairs -->
+          <g stroke-width="4" stroke-linecap="butt">
+            <line x1="52"  y1="146" x2="86"  y2="146" stroke="#E07B1E"/>
+            <line x1="156" y1="146" x2="190" y2="146" stroke="var(--w-green)"/>
+            <line x1="260" y1="146" x2="294" y2="146" stroke="#2C6FD1"/>
+            <line x1="364" y1="146" x2="398" y2="146" stroke="var(--w-brown)"/>
+          </g>
+
+          <text class="t-sub" x="69"  y="172" text-anchor="middle">wht/org</text>
+          <text class="t-sub" x="433" y="172" text-anchor="middle">brown</text>
+          <text class="t-sub" x="329" y="196" text-anchor="middle">6</text>
+          <text class="t-sub" x="381" y="196" text-anchor="middle">7</text>
+          <text class="t-sub" x="433" y="196" text-anchor="middle">8</text>
+          <line x1="312" y1="206" x2="450" y2="206" stroke="currentColor" stroke-width="1.6" style="color: var(--accent)"/>
+          <text class="t-brow" x="381" y="224" text-anchor="middle">THE THREE YOU NEED</text>
+</svg>

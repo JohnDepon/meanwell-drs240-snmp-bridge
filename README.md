@@ -13,7 +13,7 @@ case and needs no extra configuration — see
 Built for DRS-240-24s on a Raspberry Pi with a Waveshare USB-to-RS485
 adapter, but nothing here is specific to that combination.
 
-- **Wiring and pinout:** [`docs/WIRING.md`](docs/WIRING.md) · [wiring diagram](docs/wiring-diagram.html)
+- **Wiring and pinout:** [`docs/WIRING.md`](docs/WIRING.md) · [wiring diagram](docs/wiring-diagram.md) (viewable here; [print version](docs/wiring-diagram.html))
 - **Email alerts on power events:** [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md)
 - **LibreNMS patch and setup:** [`librenms/README.md`](librenms/README.md)
 - **How the PSU maps onto UPS-MIB:** [`docs/UPS-MIB.md`](docs/UPS-MIB.md)

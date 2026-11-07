@@ -1,5 +1,11 @@
 # Wiring the DRS-240-24 to the Waveshare USB-to-RS485 adapter
 
+For the cable itself, start with the drawn version:
+[`wiring-diagram.md`](wiring-diagram.md) shows which coloured Waveshare lead
+goes to which RJ45 pin, and which end of the plug is pin 1. This file is the
+reference behind it — pinouts, termination, multi-drop wiring and the CN1
+address straps.
+
 Vendor documents, since neither is redistributed in this repo:
 [DRS-240 datasheet](https://www.meanwell.com/Upload/PDF/DRS-240/DRS-240-spec.pdf) ·
 [DRS Series instruction manual](https://www.meanwell.com/Upload/PDF/DRS-240,480.pdf) ·

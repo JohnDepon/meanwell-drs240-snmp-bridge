@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img">
+  <title>Wiring run from a DRS-240 RJ45 plug to a Waveshare USB-to-RS485 adapter. RJ45 pin 6 (green conductor) joins the adapter's yellow B-minus lead, pin 7 (white/brown) joins the blue A-plus lead, and pin 8 (brown) joins the black ground lead. Pins 1 to 5 are unused and the adapter's red 5 volt lead is left unconnected.</title>
+  <style>
+    .fig-bg  { fill: #FFFFFF; }
+    .t-pin   { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 13px; font-weight: 600; fill: #121820; }
+    .t-nc    { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 11px; font-weight: 400; fill: #7A8994; letter-spacing: .08em; }
+    .t-wire  { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 12.5px; font-weight: 600; fill: #121820; letter-spacing: .02em; }
+    .t-sub   { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 11px; font-weight: 400; fill: #4B5A66; letter-spacing: .04em; }
+    .t-brow  { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 11px; font-weight: 500; fill: #7A8994; letter-spacing: .13em; }
+    .t-warn  { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 12px; font-weight: 600; fill: #CE3A2B; letter-spacing: .04em; }
+
+    .plug-body    { fill: #F4F6F7; stroke: #4B5A66; stroke-width: 1.6; }
+    .plug-latch   { fill: #F4F6F7; stroke: #4B5A66; stroke-width: 1.6; }
+    .contact-live { fill: #BE9A28; stroke: #A8672C; stroke-width: 1; }
+    .contact-nc   { fill: #C3C9CD; stroke: #CFD7DD; stroke-width: 1; }
+    .adapter-body { fill: #1E242B; stroke: #4B5A66; stroke-width: 1.4; }
+    .usb-tab      { fill: #C3C9CD; stroke: #4B5A66; stroke-width: 1.2; }
+    .join-box     { fill: none; stroke: #A8672C; stroke-width: 1.4; stroke-dasharray: 5 4; }
+
+    .wire      { stroke-width: 8; stroke-linecap: round; fill: none; }
+    .wire-thin { stroke-width: 6; stroke-linecap: round; fill: none; }
+    .s-green   { stroke: #2A8355; }
+    .s-brown   { stroke: #7A4A2B; }
+    .s-white   { stroke: #FFFFFF; stroke-width: 3; stroke-dasharray: 13 11; stroke-linecap: butt; }
+    .s-yellow  { stroke: #CE9A12; }
+    .s-blue    { stroke: #1F5FC4; }
+    .s-black   { stroke: #1E242B; }
+    .s-red     { stroke: #CE3A2B; }
+  </style>
+  <rect class="fig-bg" x="0" y="0" width="960" height="440"/>
+
+
+          <!-- eyebrows -->
+          <text class="t-brow" x="70" y="26">DRS-240 &#183; RJ45 PLUG</text>
+          <text class="t-brow" x="865" y="172" text-anchor="middle">WAVESHARE ADAPTER</text>
+
+          <!-- RJ45 plug body -->
+          <rect class="plug-body" x="70" y="40" width="110" height="360" rx="7"/>
+
+          <!-- contacts: pins 1-5 unused -->
+          <rect class="contact-nc" x="92" y="59"  width="76" height="16" rx="2"/>
+          <rect class="contact-nc" x="92" y="101" width="76" height="16" rx="2"/>
+          <rect class="contact-nc" x="92" y="143" width="76" height="16" rx="2"/>
+          <rect class="contact-nc" x="92" y="185" width="76" height="16" rx="2"/>
+          <rect class="contact-nc" x="92" y="227" width="76" height="16" rx="2"/>
+          <!-- contacts: pins 6-8 in use -->
+          <rect class="contact-live" x="92" y="269" width="76" height="16" rx="2"/>
+          <rect class="contact-live" x="92" y="311" width="76" height="16" rx="2"/>
+          <rect class="contact-live" x="92" y="353" width="76" height="16" rx="2"/>
+
+          <!-- pin numbers -->
+          <text class="t-pin" x="60" y="72"  text-anchor="end">1</text>
+          <text class="t-pin" x="60" y="114" text-anchor="end">2</text>
+          <text class="t-pin" x="60" y="156" text-anchor="end">3</text>
+          <text class="t-pin" x="60" y="198" text-anchor="end">4</text>
+          <text class="t-pin" x="60" y="240" text-anchor="end">5</text>
+          <text class="t-pin" x="60" y="282" text-anchor="end">6</text>
+          <text class="t-pin" x="60" y="324" text-anchor="end">7</text>
+          <text class="t-pin" x="60" y="366" text-anchor="end">8</text>
+
+          <!-- NC markers for pins 1-5 -->
+          <text class="t-nc" x="194" y="72">NC</text>
+          <text class="t-nc" x="194" y="114">NC</text>
+          <text class="t-nc" x="194" y="156">NC</text>
+          <text class="t-nc" x="194" y="198">NC</text>
+          <text class="t-nc" x="194" y="240">NC</text>
+
+          <!-- patch-cable conductors, pins 6-8 -->
+          <line class="wire s-green" x1="168" y1="277" x2="436" y2="277"/>
+          <line class="wire s-brown" x1="168" y1="319" x2="436" y2="319"/>
+          <line class="s-white"      x1="176" y1="319" x2="430" y2="319"/>
+          <line class="wire s-brown" x1="168" y1="361" x2="436" y2="361"/>
+
+          <text class="t-wire" x="186" y="264">GREEN</text>
+          <text class="t-wire" x="186" y="306">WHITE / BROWN</text>
+          <text class="t-wire" x="186" y="348">BROWN</text>
+          <text class="t-sub"  x="300" y="264">pin 6 &#183; D&#8722; / DB</text>
+          <text class="t-sub"  x="300" y="348">pin 8 &#183; GND-AUX</text>
+          <text class="t-sub"  x="330" y="306">pin 7 &#183; D+ / DA</text>
+
+          <!-- join zone -->
+          <rect class="join-box" x="436" y="250" width="122" height="138" rx="8"/>
+          <text class="t-brow" x="497" y="240" text-anchor="middle">JOIN</text>
+          <line class="wire-thin s-green"  x1="436" y1="277" x2="558" y2="277"/>
+          <line class="wire-thin s-blue"   x1="436" y1="319" x2="558" y2="319"/>
+          <line class="wire-thin s-black"  x1="436" y1="361" x2="558" y2="361"/>
+
+          <!-- adapter leads -->
+          <line class="wire s-yellow" x1="552" y1="277" x2="800" y2="277"/>
+          <line class="wire s-blue"   x1="552" y1="319" x2="800" y2="319"/>
+          <line class="wire s-black"  x1="552" y1="361" x2="800" y2="361"/>
+
+          <text class="t-wire" x="574" y="264">YELLOW</text>
+          <text class="t-wire" x="574" y="306">BLUE</text>
+          <text class="t-wire" x="574" y="348">BLACK</text>
+          <text class="t-sub"  x="666" y="264">B&#8722; / RX</text>
+          <text class="t-sub"  x="640" y="306">A+ / TX</text>
+          <text class="t-sub"  x="656" y="348">GND</text>
+
+          <!-- red lead, terminated -->
+          <line class="wire s-red" x1="800" y1="210" x2="634" y2="210"/>
+          <line x1="626" y1="200" x2="642" y2="220" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="color: var(--w-red)"/>
+          <line x1="642" y1="200" x2="626" y2="220" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="color: var(--w-red)"/>
+          <text class="t-warn" x="612" y="214" text-anchor="end">RED 5 V &#8212; DO NOT CONNECT</text>
+
+          <!-- adapter body -->
+          <rect class="adapter-body" x="800" y="185" width="130" height="220" rx="12"/>
+          <rect class="usb-tab" x="930" y="282" width="22" height="36" rx="2"/>
+          <circle cx="820" cy="205" r="3.5" fill="var(--w-red)"/>
+          <circle cx="834" cy="205" r="3.5" fill="var(--w-green)"/>
+          <circle cx="848" cy="205" r="3.5" fill="var(--w-blue)"/>
+          <text class="t-brow" x="865" y="425" text-anchor="middle">TO RASPBERRY PI</text>
+</svg>
