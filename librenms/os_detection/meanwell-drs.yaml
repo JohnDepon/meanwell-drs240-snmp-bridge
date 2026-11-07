@@ -1,0 +1,66 @@
+os: meanwell-drs
+text: 'MEAN WELL DRS'
+type: power
+icon: meanwell-drs
+rfc1628_compat: true
+# Only needed for the optional os_discovery/meanwell-drs.yaml, which reads the
+# bridge's own MIB for the charger stage and internal temperature. If you skip
+# that file, drop this line and do not install the MIB.
+mib_dir: meanwell
+# The agent answers a handful of scalars; bulk requests gain nothing and
+# pass_persist back ends are happier without them.
+snmp_bulk: false
+over:
+    - { graph: device_voltage, text: Voltage }
+    - { graph: device_current, text: Current }
+    - { graph: device_charge, text: 'Battery charge' }
+    - { graph: device_runtime, text: Runtime }
+    - { graph: device_temperature, text: Temperature }
+discovery_modules:
+    # A power supply has no ports, no ARP table and no neighbours. Leaving
+    # these on just makes every discovery run slower for nothing.
+    ports: false
+    ports-stack: false
+    ipv4-addresses: false
+    ipv6-addresses: false
+    arp-table: false
+    discovery-arp: false
+    discovery-protocols: false
+    vlans: false
+    stp: false
+    route: false
+    mpls: false
+    bgp-peers: false
+    ospfv3: false
+    storage: false
+    processors: false
+    mempools: false
+    applications: false
+    entity-physical: false
+    hr-device: false
+    ntp: false
+    services: false
+    wireless: false
+    fdb-table: false
+    transceivers: false
+poller_modules:
+    ports: false
+    ipmi: false
+    bgp-peers: false
+    ospf: false
+    stp: false
+    applications: false
+discovery:
+    # Matched on sysObjectID alone, which keeps this in LibreNMS's first
+    # detection pass -- definitions that need an snmpget are deferred to a
+    # second pass, and linux/freebsd/airos are only checked after that, so
+    # nothing can claim the device first.
+    #
+    # This value is set by `sysObjectID` in each unit's snmpd.conf under
+    # /opt/drs240/snmpd/<unit>/. Every supply reports the same one on purpose:
+    # they are the same model and want the same discovery. LibreNMS keeps the
+    # devices apart by SNMP port. It lives
+    # in netSnmpPlaypen (.1.3.6.1.4.1.8072.9999.9999), which no vendor MIB
+    # uses, so the match is unambiguous.
+    -
+        sysObjectID: .1.3.6.1.4.1.8072.9999.9999.240

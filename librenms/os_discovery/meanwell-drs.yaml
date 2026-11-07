@@ -1,0 +1,65 @@
+# Optional. Everything LibreNMS needs to graph this device as a UPS already
+# comes from UPS-MIB via rfc1628_compat, and none of that is repeated here.
+#
+# This file adds only the three readings RFC 1628 has no object for:
+#   - which charging stage the charger is in
+#   - the internal (not battery) ambient temperature
+#   - the bridge's rolled-up health
+#
+# It needs mibs/MEANWELL-DRS-MIB.txt installed under LibreNMS's mib path, and
+# `mib_dir: meanwell` in os_detection/meanwell-drs.yaml. Drop this file and
+# both of those if you want the standard MIB and nothing else.
+modules:
+    os:
+        hardware: UPS-MIB::upsIdentModel.0
+        version: UPS-MIB::upsIdentUPSSoftwareVersion.0
+        serial: MEANWELL-DRS-MIB::drsSerial.0
+        # No `features:` here on purpose. LibreNMS appends it to the OS
+        # string ("MEAN WELL DRS 130BFFFFFFFF (float)") and treats it as a
+        # static device attribute -- it is in the same change-detection list
+        # as os, version and serial, so every change writes an eventlog
+        # notice. The charger stage moves between float, constant current and
+        # discharging all day; it belongs in a state sensor, which is exactly
+        # where drsChargeMode already is, below.
+    sensors:
+        temperature:
+            data:
+                # upsBatteryTemperature is already discovered by the rfc1628
+                # module; this is the supply's own internal sensor, which the
+                # UPS MIB has nowhere to put.
+                -
+                    oid: MEANWELL-DRS-MIB::drsMeasurements
+                    value: MEANWELL-DRS-MIB::drsInternalTemperature
+                    num_oid: '.1.3.6.1.4.1.8072.9999.9999.240.2.5.{{ $index }}'
+                    divisor: 1000
+                    descr: 'Internal ambient'
+                    index: 'drsInternalTemperature.{{ $index }}'
+                    high_warn: 60
+                    high_limit: 70
+        state:
+            data:
+                -
+                    oid: MEANWELL-DRS-MIB::drsStatus
+                    value: MEANWELL-DRS-MIB::drsChargeMode
+                    num_oid: '.1.3.6.1.4.1.8072.9999.9999.240.3.20.{{ $index }}'
+                    descr: 'Charger stage'
+                    index: 'drsChargeMode.{{ $index }}'
+                    state_name: drsChargeMode
+                    states:
+                        - { value: 0, generic: 3, descr: Idle }
+                        - { value: 1, generic: 0, descr: 'Constant current' }
+                        - { value: 2, generic: 0, descr: 'Constant voltage' }
+                        - { value: 3, generic: 0, descr: Float }
+                        - { value: 4, generic: 0, descr: 'Fully charged' }
+                        - { value: 5, generic: 2, descr: Discharging }
+                -
+                    oid: MEANWELL-DRS-MIB::drsStatus
+                    value: MEANWELL-DRS-MIB::drsOverallState
+                    num_oid: '.1.3.6.1.4.1.8072.9999.9999.240.3.40.{{ $index }}'
+                    descr: 'Bridge health'
+                    index: 'drsOverallState.{{ $index }}'
+                    state_name: drsOverallState
+                    states:
+                        - { value: 0, generic: 0, descr: OK }
+                        - { value: 1, generic: 1, descr: Warning }
+                        - { value: 2, generic: 2, descr: Critical }

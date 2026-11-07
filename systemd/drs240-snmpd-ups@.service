@@ -1,0 +1,95 @@
+[Unit]
+Description=SNMP agent presenting DRS-240 unit %i as a UPS (RFC 1628)
+Documentation=file:/opt/drs240/librenms/README.md
+# One instance per DRS-240: `systemctl start drs240-snmpd-ups@a`. Everything
+# that differs per unit comes from %i -- the config directory, the persistent
+# directory, and DRS240_CONFIG, which is how the pass_persist helpers know
+# which PSU's state file to read. The listening port is in that unit's
+# snmpd.conf, generated from etc/snmpd/snmpd.conf.in by install.sh.
+#
+# Entirely separate from the Pi's own snmpd.service, which keeps port 161 and
+# goes on reporting the Pi as a Linux host.
+# network.target, not network-online.target. The agent binds udp:*:1161 -- a
+# wildcard socket that needs no configured address or route -- so waiting for
+# the network to be "online" buys nothing and adds a dependency on whichever
+# wait-online service the host happens to run. That is a common reason an
+# enabled unit never starts at boot yet starts fine by hand afterwards.
+After=network.target
+
+# Deliberately NOT ordered after drs240d.service. The agent answers
+# "communications lost" on every OID while the poller is down, so coming up
+# without it is a correct state rather than a broken one. drs240d itself
+# waits on dev-ttyUSB0.device, so chaining to it would let an unplugged USB
+# adapter take the whole SNMP agent down instead of reporting the fault.
+
+[Service]
+Type=simple
+# SNMPCONFPATH replaces the config search path, so this instance reads only
+# /opt/drs240/snmpd/%i/{snmp,snmpd}.conf and never the Pi's own snmpd.conf.
+#
+# This is deliberately NOT `-C -c <file>`. That suppresses every default
+# config file including snmp.conf, where the library reads `mibs` and
+# `persistentDir` from -- so MIB loading fell back to its default list, which
+# Debian does not ship (licensing), emitting several hundred "Cannot find
+# module" lines at every start, and the persistent directory fell back to
+# /var/lib/snmp, which belongs to the Pi's snmpd and is not writable by this
+# user.
+# The helpers inherit this from snmpd and resolve it through
+# drs240.config.load(), so no code has to know about units.
+Environment=DRS240_CONFIG=/opt/drs240/etc/units/%i.conf
+Environment=SNMPCONFPATH=/opt/drs240/snmpd/%i
+# Belt and braces: this is the variable the library checks first, and it
+# matches persistentDir in snmp.conf.
+Environment=SNMP_PERSISTENT_DIR=/opt/drs240/var/snmpd/%i
+
+# -LOw   log to stdout (systemd catches it), warnings and above only. Plain
+#        -Lo also emits LOG_INFO, and net-snmp built with libwrap logs
+#        "Connection from UDP: ..." at that level for EVERY request, which
+#        with LibreNMS polling is a steady stream of syslog noise.
+# -I -   do not initialise these modules. smux tries to bind TCP port 199,
+#        which is privileged and fails here ("[init_smux] bind failed:
+#        Permission denied"); the mteTrigger pair is Disman event monitoring
+#        this agent has no use for. Debian's own snmpd.service disables
+#        exactly these three.
+ExecStart=/usr/sbin/snmpd -f -LOw -I -smux,mteTrigger,mteTriggerConf
+Restart=always
+RestartSec=5
+
+# Runs as the same unprivileged user as the poller, so the pass_persist
+# helpers can read this unit's /run/drs240/state-%i.json. It needs no serial
+# access: the helpers only ever read that file, which is also why several of
+# these instances can run at once without touching the bus.
+User=drs240
+Group=drs240
+
+# snmpd rewrites its persistent directory at start-up and shutdown, and
+# ProtectSystem=strict makes the whole filesystem -- /opt included -- read
+# only. This is the one path it may write to. install.sh creates it owned by
+# drs240; a missing ReadWritePaths= target refuses to start the unit, which
+# is the failure mode to look for if the directory ever goes away.
+ReadWritePaths=/opt/drs240/var/snmpd/%i
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+# AF_NETLINK is not optional: net-snmp's ipaddress_linux module opens a
+# netlink socket to enumerate the host's IP addresses, and without it every
+# poll logs "could not open netlink socket: Address family not supported by
+# protocol" several times over. Debian's own snmpd.service has shipped with
+# the same omission, so check which daemon is logging before assuming it is
+# this one -- `systemctl status <pid>` names the unit.
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+# Port 1161 is unprivileged, so no capabilities are needed at all.
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

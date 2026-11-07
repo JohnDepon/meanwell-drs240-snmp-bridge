@@ -1,0 +1,93 @@
+# Dedicated snmpd instance that presents the DRS-240 as a UPS.
+# Installed to /opt/drs240/snmpd/@UNIT@/snmpd.conf and run by
+# drs240-snmpd-ups@@UNIT@.service, which points SNMPCONFPATH at that directory.
+#
+# This is a dedicated net-snmp instance for ONE DRS-240, unit @UNIT@, on port
+# @PORT@. Every unit gets its own instance from this same template, and the
+# Pi's own snmpd on port 161 is not touched by any of it -- so LibreNMS sees
+# the Pi as a Linux host and each DRS-240 as its own UPS.
+#
+# SNMPCONFPATH replaces the config search path, so none of the Pi's own snmpd
+# config is read: this file plus snmp.conf beside it are the whole thing.
+
+###############################################################################
+# Listening address
+###############################################################################
+# Port @PORT@ is above 1024, so this instance needs no privileges to bind.
+# Restrict it to one address if you would rather it not answer on every
+# interface, e.g.  agentaddress udp:192.0.2.10:@PORT@
+agentaddress udp:@PORT@
+
+###############################################################################
+# Identity
+###############################################################################
+# This is the part that makes LibreNMS see a UPS rather than a Linux box.
+#
+# sysObjectID must stay in step with resources/definitions/os_detection/
+# meanwell-drs.yaml in the LibreNMS patch -- that file matches on this exact
+# value. It sits in netSnmpPlaypen (.1.3.6.1.4.1.8072.9999.9999), the arc
+# Net-SNMP publishes for local use, so no vendor MIB can collide with it.
+sysObjectID .1.3.6.1.4.1.8072.9999.9999.240
+
+# sysDescr must NOT begin with "Linux": LibreNMS's linux definition matches
+# any sysDescr starting with that word, and although generic OSes are only
+# checked last, there is no reason to invite the ambiguity.
+sysDescr MEAN WELL DRS-240 DC UPS, Modbus-to-SNMP bridge
+
+sysName drs240-@UNIT@
+sysContact root
+sysLocation Set me in /opt/drs240/snmpd/@UNIT@/snmpd.conf
+
+# 1 = physical layer only. A power supply is not a host or a router.
+sysServices 1
+
+###############################################################################
+# What this instance is allowed to expose
+###############################################################################
+# Deliberately narrow. Without this the instance would also serve the Pi's
+# interfaces, disks and processes, and LibreNMS would discover the Pi's
+# network ports a second time, on the UPS device. A UPS has none of that.
+#
+#   .1.3.6.1.2.1.1        system group (sysDescr, sysObjectID, sysUpTime, ...)
+#   .1.3.6.1.6.3.10.2.1   snmpEngine, so LibreNMS gets a real uptime
+#   .1.3.6.1.2.1.33       UPS-MIB
+#   .1.3.6.1.4.1.8072...  the bridge's own tree
+view   upsonly  included  .1.3.6.1.2.1.1
+view   upsonly  included  .1.3.6.1.6.3.10.2.1
+view   upsonly  included  .1.3.6.1.2.1.33
+view   upsonly  included  .1.3.6.1.4.1.8072.9999.9999.240
+
+###############################################################################
+# Access control
+###############################################################################
+# Read-only, restricted to that view, and only from the LibreNMS poller.
+# Replace the community and the source address before starting this.
+rocommunity drs240 127.0.0.1 -V upsonly
+# rocommunity drs240 192.0.2.5 -V upsonly
+
+# SNMPv3 alternative -- create the user once with the instance stopped:
+#   net-snmp-create-v3-user -ro -A '<auth pass>' -a SHA-256 \
+#       -X '<priv pass>' -x AES \
+#       --persistentDir=/opt/drs240/var/snmpd drs240ro
+# rouser drs240ro priv -V upsonly
+
+###############################################################################
+# The UPS itself
+###############################################################################
+# RFC 1628 UPS-MIB. This is what LibreNMS's rfc1628 sensor discovery reads.
+pass_persist .1.3.6.1.2.1.33 /opt/drs240/bin/drs240-ups-snmp
+
+# The bridge's own enterprise tree, carrying the handful of readings RFC 1628
+# has no object for -- charger stage and internal (not battery) temperature.
+# The LibreNMS OS definition discovers these automatically; nothing here has
+# to be added by hand. Comment it out if you only want the standard MIB.
+pass_persist .1.3.6.1.4.1.8072.9999.9999.240 /opt/drs240/bin/drs240-snmp
+
+###############################################################################
+# Housekeeping
+###############################################################################
+# Nothing here is writable over SNMP; there is no rwcommunity on purpose.
+# Writes to the PSU go through `drs240 set` on the Pi, deliberately.
+#
+# MIB loading and the persistent directory are set in snmp.conf beside this
+# file -- the library reads those tokens from there, not from here.

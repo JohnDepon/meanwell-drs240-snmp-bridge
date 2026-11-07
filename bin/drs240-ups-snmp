@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+"""UPS-MIB (RFC 1628) pass_persist back end, for the dedicated UPS snmpd.
+
+Called by snmpd-ups, not by hand. Reads only the poller's state file; it never
+opens the serial port.
+"""
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+from drs240 import __version__  # noqa: E402
+from drs240 import config as config_module  # noqa: E402
+from drs240 import passpersist  # noqa: E402
+
+if __name__ == "__main__":
+    # snmpd renders a helper that exits as an empty subtree, so never let an
+    # unexpected exception escape: answer with defaults and log the reason.
+    try:
+        cfg = config_module.load()
+    except Exception:
+        import logging
+        logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
+        logging.getLogger("drs240").exception(
+            "could not load the config; serving UPS-MIB with defaults")
+        cfg = config_module.Config(config_module.configparser.ConfigParser())
+        cfg._parser.read_dict(config_module.DEFAULTS)
+
+    sys.exit(passpersist.main_ups(
+        cfg, agent_version="drs240-bridge %s" % __version__))

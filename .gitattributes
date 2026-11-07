@@ -1,0 +1,12 @@
+# Everything in this repo runs on Linux, so everything checks out with LF
+# regardless of the cloner's core.autocrlf. This is not cosmetic: a CRLF line
+# ending in install.sh makes the kernel read the shebang as `/bin/bash\r` and
+# `sudo ./install.sh` fails with "No such file or directory", which is an
+# invisible fault in every editor. tests/test_packaging.py checks the working
+# tree for the same thing.
+* text=auto eol=lf
+
+# Not text. Never touch the bytes.
+*.pdf binary
+*.png binary
+*.jpg binary

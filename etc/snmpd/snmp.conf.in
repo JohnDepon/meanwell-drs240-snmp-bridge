@@ -1,0 +1,35 @@
+# Library-level settings for the DRS-240 UPS snmpd instance.
+# Installed to /opt/drs240/snmpd/@UNIT@/snmp.conf.
+#
+# The service sets SNMPCONFPATH=/opt/drs240/snmpd/@UNIT@, which REPLACES the
+# default config search path. That does two jobs at once: this instance never
+# reads the Pi's own /etc/snmp/snmpd.conf, and the tokens below -- which the
+# net-snmp library reads from snmp.conf, not snmpd.conf -- are parsed
+# properly. Loading the agent config with `-C -c file` instead made both of
+# them "Unknown token", because that path only checks agent tokens.
+
+###############################################################################
+# MIBs
+###############################################################################
+# Load none. The agent works entirely in numeric OIDs -- MIB files only give
+# human-readable names to client tools -- and Debian ships snmpd without the
+# IETF MIBs for licensing reasons, so any attempt to load the defaults
+# produces several hundred lines of "Cannot find module (SNMPv2-MIB)" and
+# "Cannot adopt OID" at every start.
+#
+# This is the same line Debian puts in its own /etc/snmp/snmp.conf, and for
+# the same reason.
+mibs :
+
+###############################################################################
+# Persistent storage
+###############################################################################
+# snmpd rewrites this directory at start-up and shutdown. It must NOT be the
+# default /var/lib/snmp, which belongs to the Pi's own snmpd and is owned by
+# Debian-snmp -- this instance runs as drs240 and would log a burst of
+# "Cannot rename" and "read_config_store open failure" trying to use it.
+#
+# The service also sets SNMP_PERSISTENT_DIR to the same path, which is what
+# actually takes effect first; this line keeps the two in step and documents
+# the intent.
+persistentDir /opt/drs240/var/snmpd/@UNIT@

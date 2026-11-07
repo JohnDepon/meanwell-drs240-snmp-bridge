@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+"""JSON output for `extend` in snmpd.conf, and for anything else that wants
+the whole picture in one place (Telegraf, a cron script, curl-to-Grafana).
+
+Prints the daemon's state file; it never touches the serial port.
+"""
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+from drs240 import config as config_module  # noqa: E402
+from drs240 import daemon  # noqa: E402
+
+import json  # noqa: E402
+
+if __name__ == "__main__":
+    cfg = config_module.load()
+    state = daemon.read_state(cfg.state_file, cfg.stale_after)
+    if state is None:
+        state = {"ok": False, "error": "bridge is not running (no state file)"}
+    json.dump(state, sys.stdout, separators=(",", ":"), sort_keys=True)
+    sys.stdout.write("\n")

@@ -1,0 +1,544 @@
+MEANWELL-DRS-MIB DEFINITIONS ::= BEGIN
+
+-- Objects published by the DRS-240 Modbus-to-SNMP bridge.
+--
+-- The tree lives under netSnmpPlaypen (.1.3.6.1.4.1.8072.9999.9999), the arc
+-- Net-SNMP publishes for local and experimental use. It requires no
+-- registration and cannot collide with a real vendor MIB. If you have your
+-- own enterprise number, change meanWellDrsMIB below and BASE_OID in
+-- drs240/oids.py to match.
+--
+-- Values with a fractional part are published in milli-units, because SNMP
+-- has no floating point type. Every such object says so in its DESCRIPTION
+-- and carries UNITS.
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Gauge32, Counter32,
+    enterprises
+        FROM SNMPv2-SMI
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+    DisplayString
+        FROM SNMPv2-TC;
+
+netSnmp              OBJECT IDENTIFIER ::= { enterprises 8072 }
+netSnmpPlaypenRoot   OBJECT IDENTIFIER ::= { netSnmp 9999 }
+netSnmpPlaypen       OBJECT IDENTIFIER ::= { netSnmpPlaypenRoot 9999 }
+
+meanWellDrsMIB MODULE-IDENTITY
+    LAST-UPDATED "202609070000Z"
+    ORGANIZATION "local"
+    CONTACT-INFO "Local deployment; see /opt/drs240/README.md"
+    DESCRIPTION
+        "Readings taken over Modbus RTU from a MEAN WELL DRS-240 or DRS-480
+         all-in-one security power supply and republished over SNMP."
+    REVISION "202609070000Z"
+    DESCRIPTION "Initial version."
+    ::= { netSnmpPlaypen 240 }
+
+drsInfo         OBJECT IDENTIFIER ::= { meanWellDrsMIB 1 }
+drsMeasurements OBJECT IDENTIFIER ::= { meanWellDrsMIB 2 }
+drsStatus       OBJECT IDENTIFIER ::= { meanWellDrsMIB 3 }
+drsSettings     OBJECT IDENTIFIER ::= { meanWellDrsMIB 4 }
+drsConformance  OBJECT IDENTIFIER ::= { meanWellDrsMIB 9 }
+drsGroups       OBJECT IDENTIFIER ::= { drsConformance 1 }
+drsCompliances  OBJECT IDENTIFIER ::= { drsConformance 2 }
+
+-- ==========================================================================
+-- Identification and bridge health
+-- ==========================================================================
+
+drsModel OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Model name read from MFR_MODEL, e.g. DRS-240-24."
+    ::= { drsInfo 1 }
+
+drsManufacturer OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Manufacturer name read from MFR_ID."
+    ::= { drsInfo 2 }
+
+drsSerial OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Serial number read from MFR_SERIAL."
+    ::= { drsInfo 3 }
+
+drsFirmware OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Firmware revision from MFR_REVISION, as hex."
+    ::= { drsInfo 4 }
+
+drsMfrDate OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Manufacturing date from MFR_DATE."
+    ::= { drsInfo 5 }
+
+drsMfrLocation OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Manufacturing location from MFR_LOCATION."
+    ::= { drsInfo 6 }
+
+drsSlaveId OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Modbus slave ID the bridge is polling, normally 131 (0x83)."
+    ::= { drsInfo 7 }
+
+drsCommOk OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "1 if the most recent poll of the power supply succeeded and the
+         reading is fresh, 0 if the poll failed or the bridge has stopped
+         updating. This is the object to alert on for 'monitoring is broken'
+         as distinct from 'the power supply is unhappy'."
+    ::= { drsInfo 8 }
+
+drsLastPollAge OBJECT-TYPE
+    SYNTAX      Gauge32
+    UNITS       "seconds"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Age of the reading being served."
+    ::= { drsInfo 9 }
+
+drsPollErrors OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Failed polls since the bridge started. A slowly climbing value with
+         drsCommOk still 1 points at marginal RS485 wiring or termination."
+    ::= { drsInfo 10 }
+
+drsPolls OBJECT-TYPE
+    SYNTAX      Counter32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Successful polls since the bridge started."
+    ::= { drsInfo 11 }
+
+drsCommError OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Text of the last polling error; empty string when healthy."
+    ::= { drsInfo 12 }
+
+-- ==========================================================================
+-- Measurements
+-- ==========================================================================
+
+drsAcInputVoltage OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "millivolts"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "AC mains input voltage from READ_VIN. Divide by 1000 for volts."
+    ::= { drsMeasurements 1 }
+
+drsOutputVoltage OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "millivolts"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "DC output voltage from READ_VOUT. Divide by 1000 for volts."
+    ::= { drsMeasurements 2 }
+
+drsOutputCurrent OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "milliamps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "DC output current from READ_IOUT. Divide by 1000 for amps."
+    ::= { drsMeasurements 3 }
+
+drsOutputPower OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "milliwatts"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Output power, calculated as READ_VOUT x READ_IOUT. The unit does not
+         report power directly. Divide by 1000 for watts."
+    ::= { drsMeasurements 4 }
+
+drsInternalTemperature OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "millidegrees Celsius"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Internal ambient temperature from READ_TEMPERATURE_1. Divide by 1000
+         for degrees Celsius. Can be negative."
+    ::= { drsMeasurements 5 }
+
+drsBatteryVoltage OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "millivolts"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Battery voltage from READ_VBAT. Divide by 1000 for volts."
+    ::= { drsMeasurements 6 }
+
+drsBatteryCurrent OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "milliamps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Battery current from READ_IBAT. Positive while charging, negative
+         while the battery is supplying the load. Divide by 1000 for amps."
+    ::= { drsMeasurements 7 }
+
+drsBatteryTemperature OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "millidegrees Celsius"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Battery temperature from READ_BAT_TEMPERATURE. Meaningful only if the
+         optional NTC sensor is fitted to CN1. Divide by 1000."
+    ::= { drsMeasurements 8 }
+
+drsBatteryPower OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "milliwatts"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Battery power, calculated as READ_VBAT x READ_IBAT. Positive while
+         charging. Divide by 1000 for watts."
+    ::= { drsMeasurements 9 }
+
+-- ==========================================================================
+-- Status
+-- ==========================================================================
+
+drsFaultStatusRaw OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "FAULT_STATUS register (0x0040) exactly as read."
+    ::= { drsStatus 1 }
+
+drsChargerStatusRaw OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "CHG_STATUS register (0x00B8) exactly as read."
+    ::= { drsStatus 2 }
+
+drsSystemStatusRaw OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "SYSTEM_STATUS register (0x00C3) exactly as read."
+    ::= { drsStatus 3 }
+
+drsAcFail OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = AC input outside the configured OK window."
+    ::= { drsStatus 10 }
+
+drsDcOutputOff OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = the DC output is switched off."
+    ::= { drsStatus 11 }
+
+drsOverTemperature OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = over-temperature protection has tripped."
+    ::= { drsStatus 12 }
+
+drsOverVoltage OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = output over-voltage protection has tripped."
+    ::= { drsStatus 13 }
+
+drsOverLoad OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = output over-current protection has tripped."
+    ::= { drsStatus 14 }
+
+drsShortCircuit OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = short-circuit protection has tripped."
+    ::= { drsStatus 15 }
+
+drsHighTemperature OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = ambient temperature abnormal."
+    ::= { drsStatus 16 }
+
+drsFanFail OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "1 = fan abnormal. The DRS-240 is convection cooled and the manual
+         marks this bit as not supported, so it should always read 0."
+    ::= { drsStatus 17 }
+
+drsChargeMode OBJECT-TYPE
+    SYNTAX      Integer32 (0..5)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Charger stage, collapsed from the CHG_STATUS bits into one value:
+         0 idle, 1 constant current, 2 constant voltage, 3 float,
+         4 fully charged, 5 discharging."
+    ::= { drsStatus 20 }
+
+drsChargeModeName OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "drsChargeMode as text."
+    ::= { drsStatus 21 }
+
+drsBatteryPresent OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "1 = a battery is detected. Inverted from the BTNC bit so that 1 is
+         the healthy state."
+    ::= { drsStatus 22 }
+
+drsDischarging OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = the battery is supplying the load."
+    ::= { drsStatus 23 }
+
+drsFullyCharged OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = the battery is fully charged."
+    ::= { drsStatus 24 }
+
+drsUpsMode OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = running in UPS mode, 0 = normal charging mode."
+    ::= { drsStatus 25 }
+
+drsDcOk OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = secondary DC output voltage normal."
+    ::= { drsStatus 26 }
+
+drsEepromError OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = EEPROM data access error."
+    ::= { drsStatus 27 }
+
+drsNtcShort OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = the temperature-compensation circuit is short-circuited."
+    ::= { drsStatus 28 }
+
+drsBufferingTimeout OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = the buffering timer expired."
+    ::= { drsStatus 29 }
+
+drsCcTimeout OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "1 = the constant-current stage hit CURVE_CC_TIMEOUT, which usually
+         means a tired or undersized battery."
+    ::= { drsStatus 30 }
+
+drsCvTimeout OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = the constant-voltage stage hit CURVE_CV_TIMEOUT."
+    ::= { drsStatus 31 }
+
+drsFvTimeout OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = the float stage hit CURVE_FV_TIMEOUT."
+    ::= { drsStatus 32 }
+
+drsInitialised OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1 = the unit has finished its start-up initialisation."
+    ::= { drsStatus 33 }
+
+drsOverallState OBJECT-TYPE
+    SYNTAX      Integer32 (0..2)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "All of the above rolled into one alertable value:
+         0 ok, 1 warning, 2 critical. Reads 2 when the bridge cannot reach
+         the power supply at all."
+    ::= { drsStatus 40 }
+
+drsOverallStateText OBJECT-TYPE
+    SYNTAX      DisplayString
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Why drsOverallState is what it is."
+    ::= { drsStatus 41 }
+
+-- ==========================================================================
+-- Configured set points
+-- ==========================================================================
+
+drsOperation OBJECT-TYPE
+    SYNTAX      Integer32 (0..1)
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "OPERATION register: 0 = output off, 1 = output on."
+    ::= { drsSettings 1 }
+
+drsOutputVoltageSet OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "millivolts"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Configured output voltage (VOUT_SET). Divide by 1000."
+    ::= { drsSettings 2 }
+
+drsCurveConstantCurrent OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "milliamps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Charge constant current (CURVE_CC). Divide by 1000."
+    ::= { drsSettings 3 }
+
+drsCurveConstantVoltage OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "millivolts"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Charge constant voltage (CURVE_CV). Divide by 1000."
+    ::= { drsSettings 4 }
+
+drsCurveFloatVoltage OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "millivolts"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Charge float voltage (CURVE_FV). Divide by 1000."
+    ::= { drsSettings 5 }
+
+drsCurveTaperCurrent OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "milliamps"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Charge taper current (CURVE_TC). Divide by 1000."
+    ::= { drsSettings 6 }
+
+drsBatteryUvpSet OBJECT-TYPE
+    SYNTAX      Integer32
+    UNITS       "millivolts"
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Battery low-voltage cut-off (BAT_UVP_SET). Divide by 1000."
+    ::= { drsSettings 7 }
+
+-- ==========================================================================
+-- Conformance
+-- ==========================================================================
+
+drsInfoGroup OBJECT-GROUP
+    OBJECTS { drsModel, drsManufacturer, drsSerial, drsFirmware, drsMfrDate,
+              drsMfrLocation, drsSlaveId, drsCommOk, drsLastPollAge,
+              drsPollErrors, drsPolls, drsCommError }
+    STATUS  current
+    DESCRIPTION "Identification of the power supply and health of the bridge."
+    ::= { drsGroups 1 }
+
+drsMeasurementsGroup OBJECT-GROUP
+    OBJECTS { drsAcInputVoltage, drsOutputVoltage, drsOutputCurrent,
+              drsOutputPower, drsInternalTemperature, drsBatteryVoltage,
+              drsBatteryCurrent, drsBatteryTemperature, drsBatteryPower }
+    STATUS  current
+    DESCRIPTION "Live analogue readings."
+    ::= { drsGroups 2 }
+
+drsStatusGroup OBJECT-GROUP
+    OBJECTS { drsFaultStatusRaw, drsChargerStatusRaw, drsSystemStatusRaw,
+              drsAcFail, drsDcOutputOff, drsOverTemperature, drsOverVoltage,
+              drsOverLoad, drsShortCircuit, drsHighTemperature, drsFanFail,
+              drsChargeMode, drsChargeModeName, drsBatteryPresent,
+              drsDischarging, drsFullyCharged, drsUpsMode, drsDcOk,
+              drsEepromError, drsNtcShort, drsBufferingTimeout, drsCcTimeout,
+              drsCvTimeout, drsFvTimeout, drsInitialised, drsOverallState,
+              drsOverallStateText }
+    STATUS  current
+    DESCRIPTION "Protection, charger and system status."
+    ::= { drsGroups 3 }
+
+drsSettingsGroup OBJECT-GROUP
+    OBJECTS { drsOperation, drsOutputVoltageSet, drsCurveConstantCurrent,
+              drsCurveConstantVoltage, drsCurveFloatVoltage,
+              drsCurveTaperCurrent, drsBatteryUvpSet }
+    STATUS  current
+    DESCRIPTION "Configured set points read back from the unit."
+    ::= { drsGroups 4 }
+
+drsFullCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The bridge implements every object in this MIB, all read-only.
+         Objects whose value is unavailable in a given poll are omitted from
+         the tree rather than reported as zero."
+    MODULE
+        MANDATORY-GROUPS { drsInfoGroup, drsMeasurementsGroup,
+                           drsStatusGroup, drsSettingsGroup }
+    ::= { drsCompliances 1 }
+
+END

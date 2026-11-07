@@ -1,0 +1,73 @@
+[Unit]
+Description=MEAN WELL DRS-240 Modbus poller
+Documentation=file:/opt/drs240/README.md
+# Deliberately NOT ordered after multi-user.target. This unit is WantedBy
+# that target, and systemd.special(7) warns that ordering a unit after a
+# target which also wants it can produce a dependency cycle. systemd breaks
+# a cycle by DELETING one of the jobs, which leaves the unit silently
+# un-started at boot while `systemctl start` still works by hand. The
+# default dependencies already order this after basic.target.
+# Wait for the USB serial adapter. Adjust if you use a by-id path -- see the
+# commented-out override at the bottom of this file.
+After=dev-ttyUSB0.device
+Wants=dev-ttyUSB0.device
+
+# DeviceAllow=char-ttyUSB below resolves the group name through /proc/devices
+# *when the unit starts*, and systemd silently drops any group it cannot
+# resolve then. usbserial registers ttyUSB (major 188) only when it loads, so
+# on a Pi booted with the adapter unplugged the allow-list entry is missing
+# and every open() returns EPERM -- "Operation not permitted", not the
+# "Permission denied" a group-membership problem would give. Forcing the
+# module in first is the workaround systemd.resource-control(5) documents.
+Wants=modprobe@usbserial.service
+After=modprobe@usbserial.service
+
+[Service]
+Type=simple
+ExecStart=/opt/drs240/bin/drs240 daemon
+Restart=always
+RestartSec=5
+
+# Runs as a dedicated unprivileged user that is only in the dialout group.
+User=drs240
+Group=drs240
+SupplementaryGroups=dialout
+
+# /run/drs240, owned by drs240 and world-readable so snmpd can read the state
+# file without any privileges of its own.
+RuntimeDirectory=drs240
+RuntimeDirectoryMode=0755
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+# AF_INET/AF_INET6 are needed to send mail, and DNS is the part that fails
+# first without them: getaddrinfo() cannot reach the resolver and returns
+# EAI_AGAIN, which surfaces as "Temporary failure in name resolution" even
+# though the name resolves perfectly from a shell. AF_NETLINK is what glibc
+# uses to decide which address families are usable before it resolves.
+# If you set [notify] method = none and want the tightest sandbox, this can
+# go back to just AF_UNIX.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+# The serial port is the only device it needs.
+DeviceAllow=char-ttyUSB rw
+DevicePolicy=closed
+
+[Install]
+WantedBy=multi-user.target
+
+# If you switch to a by-id path in /opt/drs240/etc/drs240.conf, replace the two device
+# lines above with the escaped unit name, for example:
+#
+#   After=dev-serial-by\x2did-usb\x2dFTDI_FT232R...-if00\x2dport0.device
+#
+# `systemd-escape --path /dev/serial/by-id/<name>` prints the right string.

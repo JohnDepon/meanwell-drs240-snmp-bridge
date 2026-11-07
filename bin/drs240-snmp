@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""net-snmp pass_persist back end. Called by snmpd, not by hand.
+
+Kept as its own entry point so snmpd.conf does not have to carry a subcommand,
+and so this path can be given a tighter set of permissions than the CLI.
+"""
+
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+from drs240 import config as config_module  # noqa: E402
+from drs240 import passpersist  # noqa: E402
+
+if __name__ == "__main__":
+    sys.exit(passpersist.main_enterprise(config_module.load()))

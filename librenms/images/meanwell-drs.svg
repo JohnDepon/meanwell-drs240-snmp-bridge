@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="DC UPS">
+  <title>DC UPS</title>
+  <!-- DIN-rail power supply seen from the front, with a battery-backup mark.
+       Deliberately generic: no manufacturer logo or wordmark. -->
+  <rect x="9" y="8" width="34" height="48" rx="3" fill="#2f3d4a"/>
+  <rect x="12" y="11" width="28" height="15" rx="2" fill="#4a5c6d"/>
+  <!-- vent slots -->
+  <g fill="#8fa3b5">
+    <rect x="15" y="14" width="22" height="2" rx="1"/>
+    <rect x="15" y="18" width="22" height="2" rx="1"/>
+    <rect x="15" y="22" width="22" height="2" rx="1"/>
+  </g>
+  <!-- status LEDs: DC OK, AC fail, status -->
+  <circle cx="17" cy="32" r="2.6" fill="#4fbf7a"/>
+  <circle cx="26" cy="32" r="2.6" fill="#e0a92b"/>
+  <circle cx="35" cy="32" r="2.6" fill="#7d8fa0"/>
+  <!-- output terminal block -->
+  <rect x="12" y="39" width="28" height="13" rx="2" fill="#1d2731"/>
+  <g fill="#c8b06a">
+    <rect x="15" y="42" width="5" height="7" rx="1"/>
+    <rect x="22" y="42" width="5" height="7" rx="1"/>
+    <rect x="29" y="42" width="5" height="7" rx="1"/>
+  </g>
+  <!-- battery, indicating UPS capability -->
+  <rect x="45" y="24" width="14" height="26" rx="2.5" fill="#2f3d4a"/>
+  <rect x="49" y="21" width="6" height="3.5" rx="1.2" fill="#2f3d4a"/>
+  <rect x="47.5" y="38" width="9" height="10" rx="1.2" fill="#4fbf7a"/>
+  <rect x="47.5" y="30" width="9" height="6.5" rx="1.2" fill="#4fbf7a" opacity="0.5"/>
+</svg>
